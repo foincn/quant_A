@@ -6,6 +6,7 @@ import requests
 import sqlite3
 import threading
 from multiprocessing import Process
+import time
 
 threads = []
 for i in ashare_list:
@@ -28,8 +29,8 @@ for c in counts:
     c.join()
 
 
-# 获取MA历史数据
-def get_ma_data(stock_code):
+# 获取MA数据
+def get_ma_hist(stock_code):
     print('Getting %s Data' % stock_code)
     s = requests.session()
     s.keep_alive = False
@@ -37,14 +38,35 @@ def get_ma_data(stock_code):
     r = s.get(url, timeout=5)
     ma = r.json()['record']
     # MA5
-    ma5_1 = float(ma[-1][8])
-    ma5_2 = float(ma[-2][8])
+    ma5_1 = float(ma[-2][8])
    # MA10
-    ma10_1 = float(ma[-1][9])
-    globals()['dt'+str(stock_code)] = [ma5_1, ma5_2, ma10_1]
+    ma10_1 = float(ma[-2][9])
+    globals()['hist'+str(stock_code)] = (ma5_1, ma10_1)
 
 for i in ashare_list:
-    get_ma_data(i)
+    get_ma_hist(i)
 
+def get_ma_now(stock_code):
+    print('Getting %s Data' % stock_code)
+    s = requests.session()
+    s.keep_alive = False
+    url =  'http://api.finance.ifeng.com/akdaily/?code=%s&type=last' % sscode(stock_code)
+    r = s.get(url, timeout=5)
+    ma = r.json()['record']
+    # MA5
+    ma5_now = float(ma[-1][8])
+   # MA10
+    ma10_now = float(ma[-1][9])
+    globals()['now'+str(stock_code)] = [ma5_now, ma10_now]
 
+buy_list = []
+
+while Ture:
+    get_ma_now(stock_code)
+    if globals()['now'+str(stock_code)][0] > globals()['now'+str(stock_code)][1]:
+        #inseart()
+        buy_list.append(stock_code)
+    time.sleep(15)
     
+
+
