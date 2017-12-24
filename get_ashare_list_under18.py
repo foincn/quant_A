@@ -90,6 +90,29 @@ def check_stop(stock_code):
             if r.text.split("\"")[1].split(",")[12] == '0':
                 ashare_list.remove(stock_code)
 
+# 获取MA数据
+def get_ma_hist(stock_code):
+    print('Getting %s Data' % stock_code)
+    s = requests.session()
+    s.keep_alive = False
+    url =  'http://api.finance.ifeng.com/akdaily/?code=%s&type=last' % sscode(stock_code)
+    r = s.get(url, timeout=5)
+    ma = r.json()['record']
+    # MA5
+    ma5_1 = float(ma[-2][8])
+    ma5_2 = float(ma[-3][8])
+   # MA10
+    ma10_1 = float(ma[-2][9])
+    if ma5_2 < ma5_1:
+        globals()['hist'+str(stock_code)] = (ma5_1, ma10_1)
+    else:
+        ashare_list.remove(stock_code)
+
+def get_hist_data():
+    for i in ashare_list:
+        get_ma_hist(i)
+    print('All HIST DATA GOT!')
+
 def get_list():
     get_stocks_list()
     a = len(ashare_list)
@@ -112,4 +135,4 @@ create_form('instance', 'sh_under18')
 t = threading.Thread(target=insert)
 t.start()
 
-
+get_hist_data()
