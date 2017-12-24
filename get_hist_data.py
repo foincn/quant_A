@@ -5,6 +5,7 @@ import get_ashare_list.py
 import requests
 import sqlite3
 import threading
+from multiprocessing import Process
 
 threads = []
 for i in ashare_list:
