@@ -99,12 +99,12 @@ def get_list():
 
 def insert():
     for i in ashare_list:
-        insert_data('instance', 'sh', i)
+        insert_data('instance', 'sh_under18', i)
     print('All Data Inserted!')
 
 get_list()
-delete_form('instance', 'sh')
-create_form('instance', 'sh')
+delete_form('instance', 'sh_under18')
+create_form('instance', 'sh_under18')
 #for i in ashare_list:
 #    insert_data('instance', 'sh', i)
 
