@@ -83,11 +83,12 @@ def check_stop(stock_code):
     r = None
     while r == None:
         r = s.get(url, headers=header, timeout=1)
-    if r.text.split("\"")[1].split(",")[8] == '0':
+    if r.text.split("\"")[1].split(",")[1] > 18:
+        ashare_list.remove(stock_code)
+    elif r.text.split("\"")[1].split(",")[8] == '0':
         if r.text.split("\"")[1].split(",")[10] == '0':
             if r.text.split("\"")[1].split(",")[12] == '0':
                 ashare_list.remove(stock_code)
-
 def get_list():
     get_stocks_list()
     a = len(ashare_list)
