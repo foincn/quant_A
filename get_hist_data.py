@@ -39,9 +39,14 @@ def get_ma_hist(stock_code):
     ma = r.json()['record']
     # MA5
     ma5_1 = float(ma[-2][8])
+    ma5_2 = float(ma[-3][8])
    # MA10
     ma10_1 = float(ma[-2][9])
-    globals()['hist'+str(stock_code)] = (ma5_1, ma10_1)
+    if ma5_2 < ma5_1:
+        globals()['hist'+str(stock_code)] = (ma5_1, ma10_1)
+    else:
+        ashare_list.remove(stock_code)
+
 
 for i in ashare_list:
     get_ma_hist(i)
