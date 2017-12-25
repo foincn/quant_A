@@ -99,20 +99,21 @@ def ma_now(stock_code):
 #######---plot---#######
 import pylab as pl
 
-def plot_ma(TITLE, MA5, MA10, DATE):
-    pl.title(TITLE)
+def plot_ma(stock_code, MA5, MA10, DATE):
+    title = '%s %s' % (stock_code, sscode(stock_code))
+    pl.title(title)
     a, = pl.plot(DATE, MA5, 'r-')
     b, = pl.plot(DATE, MA10, 'b-')
     pl.legend([a, b], ('MA5', 'MA10'), numpoints=1)
-    pl.savefig('stock/%s.png' % TITLE)
+    pl.savefig('stock/%s.png' % sscode(stock_code))
     pl.close()
-    print('Plot %s success' % TITLE)
+    print('Plot %s success' % title)
 
 def get_ma(stock_code):
     ua_mo = 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_1_1 like Mac OS X) AppleWebKit/604.3.5 (KHTML, like Gecko) Version/11.0 Mobile/15B150 Safari/604.1'
     header = {'User-Agent':ua_mo}
-    ma_url = 'http://api.finance.ifeng.com/akdaily/?code=%s&type=last' % stock_code
-    now_url = 'http://api.finance.ifeng.com/aminhis/?code=%s&type=five' % stock_code
+    ma_url = 'http://api.finance.ifeng.com/akdaily/?code=%s&type=last' % sscode(stock_code)
+    now_url = 'http://api.finance.ifeng.com/aminhis/?code=%s&type=five' % sscode(stock_code)
     now = requests.get(now_url, headers = header).json()[-1]['record'][-1]
     ma = requests.get(ma_url, headers = header).json()['record']
     # MA5
@@ -153,7 +154,7 @@ def plot_images(CODE):
 def plot_list(listname):
     for i in globals()[str(listname)]:
         try:
-            plot_images('sh'+i)
+            plot_images(i)
         except:
             pass
 
@@ -188,7 +189,7 @@ def get_sza_list():
     index_url = 'http://www.szse.cn/szseWeb/FrontController.szse?ACTIONID=7&AJAX=AJAX-FALSE&CATALOGID=1110&TABKEY=tab2&tab2PAGENO=1'
     index_html = s.get(index_url).content
     index_soup = BeautifulSoup(index_html, "html.parser")
-    index = int(index_soup.select('td')[-3].text[-4:-1])
+    index = int(index_soup.select('td')[-3].text.split()[1][1:-1])
     print(index)
     for i in range(index):
         i = i + 1
@@ -213,6 +214,50 @@ def get_sza_list():
             else: 
                 ashare_list.append(code)
                 print('%s Added!' % code)
+
+def get_szzx_list():
+    s = requests.session()
+    s.keep_alive = False
+    index_url = 'http://www.szse.cn/szseWeb/FrontController.szse?ACTIONID=7&AJAX=AJAX-FALSE&CATALOGID=1110&TABKEY=tab5&tab5PAGENO=1'
+    index_html = s.get(index_url).content
+    index_soup = BeautifulSoup(index_html, "html.parser")
+    index = int(index_soup.select('td')[-3].text.split()[1][1:-1])
+    print(index)
+    for i in range(index):
+        i = i + 1
+        print('获取第%s页数据，一共%s页。' % (i, index))
+        url = 'http://www.szse.cn/szseWeb/FrontController.szse?ACTIONID=7&AJAX=AJAX-FALSE&CATALOGID=1110&TABKEY=tab5&tab5PAGENO=%s' % i
+        html = s.get(url).content
+        soup = BeautifulSoup(html, "html.parser")
+        source = soup.select('tr[bgcolor="#ffffff"]')
+        source1 = soup.select('tr[bgcolor="#F8F8F8"]')
+        source += source1
+        for l in source:
+            code = l.a.u.text
+            ashare_list.append(code)
+            print('%s Added!' % code)
+
+def get_szcy_list():
+    s = requests.session()
+    s.keep_alive = False
+    index_url = 'http://www.szse.cn/szseWeb/FrontController.szse?ACTIONID=7&AJAX=AJAX-FALSE&CATALOGID=1110&TABKEY=tab6&tab6PAGENO=1'
+    index_html = s.get(index_url).content
+    index_soup = BeautifulSoup(index_html, "html.parser")
+    index = int(index_soup.select('td')[-3].text.split()[1][1:-1])
+    print(index)
+    for i in range(index):
+        i = i + 1
+        print('获取第%s页数据，一共%s页。' % (i, index))
+        url = 'http://www.szse.cn/szseWeb/FrontController.szse?ACTIONID=7&AJAX=AJAX-FALSE&CATALOGID=1110&TABKEY=tab6&tab6PAGENO=%s' % i
+        html = s.get(url).content
+        soup = BeautifulSoup(html, "html.parser")
+        source = soup.select('tr[bgcolor="#ffffff"]')
+        source1 = soup.select('tr[bgcolor="#F8F8F8"]')
+        source += source1
+        for l in source:
+            code = l.a.u.text
+            ashare_list.append(code)
+            print('%s Added!' % code)
 
 # 去除ashare_list中停牌的股票
 def check_suspended(stock_code):
