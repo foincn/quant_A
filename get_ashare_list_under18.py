@@ -3,6 +3,15 @@
 import requests
 import sqlite3
 import threading
+from datetime import date
+
+
+############PROXY###########
+
+proxies = {
+    "https": "http://122.72.18.34:80"
+
+}
 
 ########--Tools--########
 
@@ -50,6 +59,33 @@ def insert_data(dbname, formname, code):
     c.execute("INSERT INTO %s (CODE, NAME) VALUES (?, ?)" % formname,(code, name))
     conn.commit()
     conn.close()
+
+#######---get-live-data---#######
+
+def price_now(stock_code):
+    s = requests.session()
+    s.keep_alive = False
+    url = 'http://api.finance.ifeng.com/aminhis/?code=%s&type=five' % sscode(stock_code)
+    now = s.get(now_url, timeout=5).json()[-1]['record'][-1]
+    # Price
+    price = float(now[1])
+    # Average
+    average = float(now[4])
+    return (price, average)
+
+def ma_now(stock_code):
+    today = date.today()
+    span = '%s%s%s' % (today.year, today.month, today.day)
+    url = 'http://pdfm.eastmoney.com/EM_UBG_PDTI_Fast/api/js?id=%s1&TYPE=k&rtntype=1&QueryStyle=2.2&QuerySpan=%s%%2C1&extend=ma' % (stock_code, span)
+    s = requests.session()
+    s.keep_alive = False
+    header = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:56.0) Gecko/20100101 Firefox/56.0'}
+    ma = s.get(url, headers= header, proxies=proxies, timeout=3)
+    ma_data = ma.text.split('[')[1].split(']')[0].split(',')
+    ma5 = float(ma_data[0])
+    ma10 = float(ma_data[1])
+    ma20 = float(ma_data[2])
+    return(ma5, ma10)
 
 #######---plot---#######
 import pylab as pl
@@ -154,7 +190,7 @@ def check_suspended(stock_code):
                 ashare_list.remove(stock_code)
 
 # MA10连续n日大于MA5,导出至watchlist
-def watching(stock_code):
+def sort_watchlist(stock_code):
     print('Watching %s' %stock_code)
     ua_mo = 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_1_1 like Mac OS X) AppleWebKit/604.3.5 (KHTML, like Gecko) Version/11.0 Mobile/15B150 Safari/604.1'
     header = {'User-Agent':ua_mo}
@@ -195,14 +231,14 @@ def watching(stock_code):
                                         if ma10_10 > ma5_10:
                                             if ma5_2 < ma5_1:
                                                 watchlist.append(stock_code)
-                                                globals()['hist'+str(stock_code)] = [(ma5_1, ma5_2, ma5_3, ma5_4), (ma10_1, ma10_2, ma10_3, ma10_4)]
+                                                globals()['hist'+str(stock_code)] = (ma5_1, ma10_1)
                                                 print('-----已经添加 %s 至watchlist 并获取MA5/10历史数据-----' % stock_code)
 
 def get_watchlist():
     global watchlist
     watchlist = []
     for i in ashare_list:
-        watching(i)
+        sort_watchlist(i)
     print('wacthlist finished!')
     print(len(watchlist))
 
@@ -242,7 +278,21 @@ def insert():
         insert_data('instance', 'sh_under18', i)
     print('All Data Inserted!')
 
+def watching(stock_code):
+    hist = globals()['hist'+str(stock_code)]
+    ma = ma_now(stock_code)
+    if ma[0] > ma[1]:
+        if ma[0] > hist[0] and ma[1] > hist[1]:
+            buy_list.append(stock_code)
+            print('%s买入时机' % stock_code)
 
+def watch(listname):
+    global buy_list
+    buy_list = []
+    while 1:
+        print('开始')
+        for i in globals()[listname]:
+            watching(i)
 
 
 get_list()
@@ -256,3 +306,9 @@ t.start()
 get_watchlist()
 #plot_list('watchlist')
 #get_hist_data()
+watch('watchlist')
+
+            
+
+
+
