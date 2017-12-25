@@ -14,6 +14,7 @@ proxies = {
     "https": "http://183.235.254.159:8080",
     "https": "http://183.235.254.159:8080"
 }
+proxies = None
 
 ########--Tools--########
 
@@ -91,7 +92,7 @@ def ma_now(stock_code):
     ma5 = float(ma_data[0])
     ma10 = float(ma_data[1])
     ma20 = float(ma_data[2])
-    print(ma5, ma10)
+    #print(ma5, ma10)
     return(ma5, ma10)
 
 #######---plot---#######
