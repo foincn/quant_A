@@ -99,13 +99,13 @@ def ma_now(stock_code):
 #######---plot---#######
 import pylab as pl
 
-def plot_ma(stock_code, MA5, MA10, DATE):
+def plot_ma(stock_code, MA5, MA10, DATE, listname):
     title = '%s %s' % (stock_code, sscode(stock_code))
     pl.title(title)
     a, = pl.plot(DATE, MA5, 'r-')
     b, = pl.plot(DATE, MA10, 'b-')
     pl.legend([a, b], ('MA5', 'MA10'), numpoints=1)
-    pl.savefig('stock/%s.png' % sscode(stock_code))
+    pl.savefig('stock/%s/%s.png' % (listname, sscode(stock_code)))
     pl.close()
     print('Plot %s success' % title)
 
@@ -147,14 +147,14 @@ def get_ma(stock_code):
         date_list.append(ma[i][0].split('-',1)[1])
     return(stock_code, ma5_list, ma10_list, date_list)
 
-def plot_images(CODE):
+def plot_images(CODE, listname):
     a = get_ma(CODE)
-    plot_ma(a[0], a[1], a[2], a[3])
+    plot_ma(a[0], a[1], a[2], a[3], listname)
 
 def plot_list(listname):
     for i in globals()[str(listname)]:
         try:
-            plot_images(i)
+            plot_images(i, listname)
         except:
             pass
 
