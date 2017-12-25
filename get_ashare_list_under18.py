@@ -100,7 +100,7 @@ def ma_now(stock_code):
 import pylab as pl
 
 def plot_ma(stock_code, MA5, MA10, DATE, listname):
-    title = '%s %s' % (stock_code, sscode(stock_code))
+    title = '%s %s' % (stock_code, share_name(stock_code))
     pl.title(title)
     a, = pl.plot(DATE, MA5, 'r-')
     b, = pl.plot(DATE, MA10, 'b-')
