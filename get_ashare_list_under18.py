@@ -297,8 +297,10 @@ def watching(stock_code):
 def watch(listname):
     global buy_list
     buy_list = []
+    c = 0
     while 1:
-        print('开始')
+        c += 1
+        print('第%s次扫描, 已找到%s支股票。' % (c, len(buy_list)))
         # time.sleep(10)
         for i in globals()[listname]:
             watching(i)
