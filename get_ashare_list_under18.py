@@ -4,6 +4,7 @@ import requests
 import sqlite3
 import threading
 import time
+from bs4 import BeautifulSoup
 from datetime import date
 
 
@@ -158,10 +159,8 @@ def plot_list(listname):
 
 
 #########################
-# 导入A股列表ashare_list并去除20171201以后上市的股票
-def get_stocks_list():
-    global ashare_list
-    ashare_list = []
+# 导入上海A股列表ashare_list并去除20171201以后上市的股票
+def get_sha_list():
     url = 'http://query.sse.com.cn/security/stock/getStockListData2.do?&stockType=1&pageHelp.beginPage=1&pageHelp.pageSize=2000'
     header = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:56.0) Gecko/20100101 Firefox/56.0',
@@ -178,7 +177,42 @@ def get_stocks_list():
             if n < 20171201:
                 ashare_list.append(code)
                 print('%s Added!' % code)
+        else: 
+            ashare_list.append(code)
+            print('%s Added!' % code)
     print('Found %d Stocks!' % len(ashare_list))
+
+def get_sza_list():
+    s = requests.session()
+    s.keep_alive = False
+    index_url = 'http://www.szse.cn/szseWeb/FrontController.szse?ACTIONID=7&AJAX=AJAX-FALSE&CATALOGID=1110&TABKEY=tab2&tab2PAGENO=1'
+    index_html = s.get(index_url).content
+    index_soup = BeautifulSoup(index_html, "html.parser")
+    index = int(index_soup.select('td')[-3].text[-4:-1])
+    print(index)
+    for i in range(index):
+        i = i + 1
+        print('获取第%s页数据，一共%s页。' % (i, index))
+        url = 'http://www.szse.cn/szseWeb/FrontController.szse?ACTIONID=7&AJAX=AJAX-FALSE&CATALOGID=1110&TABKEY=tab2&tab2PAGENO=%s' % i
+        html = s.get(url).content
+        soup = BeautifulSoup(html, "html.parser")
+        source = soup.select('tr[bgcolor="#ffffff"]')
+        source1 = soup.select('tr[bgcolor="#F8F8F8"]')
+        source += source1
+        for l in source:
+            code = l.select('td')[2].text
+            print(code)
+            listing_date = l.select('td')[4].text
+            print(listing_date)
+            if listing_date != '-':
+                d = listing_date.split('-')
+                n = int(d[0]+d[1]+d[2])
+                if n < 20171201:
+                    ashare_list.append(code)
+                    print('%s Added!' % code)
+            else: 
+                ashare_list.append(code)
+                print('%s Added!' % code)
 
 # 去除ashare_list中停牌的股票
 def check_suspended(stock_code):
@@ -274,7 +308,10 @@ def get_hist_data():
     print('All HIST DATA GOT!')
 
 def get_list():
-    get_stocks_list()
+    global ashare_list
+    ashare_list = []
+    get_sha_list()
+    get_sza_list()
     a = len(ashare_list)
     for i in ashare_list:
         check_suspended(i)
