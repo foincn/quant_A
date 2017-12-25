@@ -7,7 +7,6 @@ import time
 from bs4 import BeautifulSoup
 from datetime import date
 
-
 ############PROXY###########
 
 proxies = {
@@ -98,10 +97,12 @@ def ma_now(stock_code):
 
 #######---plot---#######
 import pylab as pl
+from matplotlib.font_manager import FontProperties  
 
 def plot_ma(stock_code, MA5, MA10, DATE, listname):
+    font = FontProperties(fname="/usr/share/fonts/opentype/noto/NotoSansCJK-Medium.ttc", size=14)
     title = '%s %s' % (stock_code, share_name(stock_code))
-    pl.title(title)
+    pl.title(title, fontproperties=font)
     a, = pl.plot(DATE, MA5, 'r-')
     b, = pl.plot(DATE, MA10, 'b-')
     pl.legend([a, b], ('MA5', 'MA10'), numpoints=1)
