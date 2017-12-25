@@ -3,14 +3,16 @@
 import requests
 import sqlite3
 import threading
+import time
 from datetime import date
 
 
 ############PROXY###########
 
 proxies = {
-    "https": "http://122.72.18.34:80"
-
+    "https": "http://165.227.100.201:80",
+    "https": "http://183.235.254.159:8080",
+    "https": "http://183.235.254.159:8080"
 }
 
 ########--Tools--########
@@ -79,12 +81,17 @@ def ma_now(stock_code):
     url = 'http://pdfm.eastmoney.com/EM_UBG_PDTI_Fast/api/js?id=%s1&TYPE=k&rtntype=1&QueryStyle=2.2&QuerySpan=%s%%2C1&extend=ma' % (stock_code, span)
     s = requests.session()
     s.keep_alive = False
-    header = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:56.0) Gecko/20100101 Firefox/56.0'}
-    ma = s.get(url, headers= header, proxies=proxies, timeout=3)
+    ma = None
+    while ma == None:
+        try:
+            ma = s.get(url, proxies=proxies, timeout=2)
+        except:
+            pass
     ma_data = ma.text.split('[')[1].split(']')[0].split(',')
     ma5 = float(ma_data[0])
     ma10 = float(ma_data[1])
     ma20 = float(ma_data[2])
+    print(ma5, ma10)
     return(ma5, ma10)
 
 #######---plot---#######
@@ -291,6 +298,7 @@ def watch(listname):
     buy_list = []
     while 1:
         print('开始')
+        # time.sleep(10)
         for i in globals()[listname]:
             watching(i)
 
