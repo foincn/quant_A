@@ -94,14 +94,11 @@ def get_ma(stock_code):
     ma10_8 = float(ma[-8][9])
     ma10_9 = float(ma[-9][9])
     ma10_10 = float(ma[-10][9])
-    if ma[-1][0] == now[0].split()[0]:
-        ma5_list = [ma5_1, ma5_2, ma5_3, ma5_4, ma5_5, ma5_6, ma5_7, ma5_8, ma5_9, ma5_10]
-        ma10_list = [ma10_1, ma10_2, ma10_3, ma10_4, ma10_5, ma10_6, ma10_7, ma10_8, ma10_9, ma10_10]
-        date_list = []
-        for i in range(-1, -11, -1):
-            date_list.append(ma[i][0].split('-',1)[1])
-    else:
-        pass
+    ma5_list = [ma5_1, ma5_2, ma5_3, ma5_4, ma5_5, ma5_6, ma5_7, ma5_8, ma5_9, ma5_10]
+    ma10_list = [ma10_1, ma10_2, ma10_3, ma10_4, ma10_5, ma10_6, ma10_7, ma10_8, ma10_9, ma10_10]
+    date_list = []
+    for i in range(-1, -11, -1):
+        date_list.append(ma[i][0].split('-',1)[1])
     return(stock_code, ma5_list, ma10_list, date_list)
 
 def plot_images(CODE):
