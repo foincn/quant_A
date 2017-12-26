@@ -19,7 +19,8 @@ proxies = None
 ########--Tools--########
 
 def sscode(code):
-    if str(code)[0]+str(code)[1] =='60':
+    code = str(code)
+    if code[0]+code[1] =='60':
         code = 'sh%s' % code
     else:
         code = 'sz%s' % code
@@ -160,10 +161,9 @@ def plot_list(listname):
             pass
 
 
-#########################
+##############################################
 # 导入上海A股列表share_list并去除20171201以后上市的股票
 def get_sha_list(listname='share_list'):
-    listname = str(listname)
     if listname in dir():
         if listname != 'share_list':
             globals()[listname] = []
@@ -192,7 +192,6 @@ def get_sha_list(listname='share_list'):
 
 # 导入深圳A股列表share_list并去除20171201以后上市的股票
 def get_sza_list(listname='share_list'):
-    listname = str(listname)
     if listname in dir():
         if listname != 'share_list':
             globals()[listname] = []
@@ -231,7 +230,6 @@ def get_sza_list(listname='share_list'):
 
 # 导入深圳中小板列表share_list
 def get_szzx_list(listname='share_list'):
-    listname = str(listname)
     if listname in dir():
         if listname != 'share_list':
             globals()[listname] = []
@@ -260,7 +258,6 @@ def get_szzx_list(listname='share_list'):
 
 # 导入深圳创业板列表share_list
 def get_szcy_list(listname='share_list'):
-    listname = str(listname)
     if listname in dir():
         if listname != 'share_list':
             globals()[listname] = []
@@ -289,7 +286,6 @@ def get_szcy_list(listname='share_list'):
 
 # 去除share_list中停牌的股票
 def check_suspended(stock_code, listname='sharelist'):
-    listname = str(listname)
     print('Checking Suspended %s...' % stock_code)
     s = requests.session()
     s.keep_alive = False
@@ -305,52 +301,32 @@ def check_suspended(stock_code, listname='sharelist'):
             if r.text.split("\"")[1].split(",")[12] == '0':
                 globals()[listname].remove(stock_code)
 
+# 去除share_list中停牌的股票list
+def check_suspended_list(listname='sharelist'):
+    print('Checking list %s...' % listname)
+    a = len(globals()[listname])
+    s = requests.session()
+    s.keep_alive = False
+    header = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:56.0) Gecko/20100101 Firefox/56.0'}
+    for i in globals()[listname]:
+        print('Checking Suspended %s...' % i)
+        url = 'http://hq.sinajs.cn/list=%s' % sscode(i)
+        r = None
+        while r == None:
+            r = s.get(url, headers=header, timeout=1)
+        if float(r.text.split("\"")[1].split(",")[1]) > 18:
+            globals()[listname].remove(i)
+        elif r.text.split("\"")[1].split(",")[8] == '0':
+            if r.text.split("\"")[1].split(",")[10] == '0':
+                if r.text.split("\"")[1].split(",")[12] == '0':
+                    globals()[listname].remove(i)
+    b = len(globals()[listname])
+    return(a, b, a-b)
 
-
-# MA10连续n日大于MA5,导出至watchlist
-def sort_watchlist(stock_code):
-    print('Watching %s' %stock_code)
-    ua_mo = 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_1_1 like Mac OS X) AppleWebKit/604.3.5 (KHTML, like Gecko) Version/11.0 Mobile/15B150 Safari/604.1'
-    header = {'User-Agent':ua_mo}
-    ma_url = 'http://api.finance.ifeng.com/akdaily/?code=%s&type=last' % sscode(stock_code)
-    ma = requests.get(ma_url, headers = header).json()['record']
-    # MA5
-    ma5_1 = float(ma[-1][8])
-    ma5_2 = float(ma[-2][8])
-    ma5_3 = float(ma[-3][8])
-    ma5_4 = float(ma[-4][8])
-    ma5_5 = float(ma[-5][8])
-    ma5_6 = float(ma[-6][8])
-    ma5_7 = float(ma[-7][8])
-    ma5_8 = float(ma[-8][8])
-    ma5_9 = float(ma[-9][8])
-    ma5_10 = float(ma[-10][8])
-    # MA10
-    ma10_1 = float(ma[-1][9])
-    ma10_2 = float(ma[-2][9])
-    ma10_3 = float(ma[-3][9])
-    ma10_4 = float(ma[-4][9])
-    ma10_5 = float(ma[-5][9])
-    ma10_6 = float(ma[-6][9])
-    ma10_7 = float(ma[-7][9])
-    ma10_8 = float(ma[-8][9])
-    ma10_9 = float(ma[-9][9])
-    ma10_10 = float(ma[-10][9])
-    # 
-    if ma10_1 > ma5_1:
-        if ma10_2 > ma5_2:
-            if ma10_3 > ma5_3:
-                if ma10_4 > ma5_4:
-                    if ma10_5 > ma5_5:
-                        if ma10_6 > ma5_6:
-                            if ma10_7 > ma5_7:
-                                if ma10_8 > ma5_8:
-                                    if ma10_9 > ma5_9:
-                                        if ma10_10 > ma5_10:
-                                            if ma5_2 < ma5_1:
-                                                watchlist.append(stock_code)
-                                                globals()['hist'+str(stock_code)] = (ma5_1, ma10_1)
-                                                print('-----已经添加 %s 至watchlist 并获取MA5/10历史数据-----' % stock_code)
+####################################################
+# 筛选股票
+def sort(listname='share_list'):
+    
 
 def get_watchlist():
     global watchlist
@@ -359,6 +335,32 @@ def get_watchlist():
         sort_watchlist(i)
     print('wacthlist finished!')
     print(len(watchlist))
+
+
+# MA10连续n日大于MA5,导出至watchlist
+def sort_ma_list(days, listname='share_list'):
+    print('筛选%s中MA10连续%s日大于MA5' % (listname, days))
+    ua_mo = 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_1_1 like Mac OS X) AppleWebKit/604.3.5 (KHTML, like Gecko) Version/11.0 Mobile/15B150 Safari/604.1'
+    header = {'User-Agent':ua_mo}
+    for i in globals()[listname]:
+        ma_url = 'http://api.finance.ifeng.com/akdaily/?code=%s&type=last' % sscode(i)
+        ma = requests.get(ma_url, headers = header).json()['record']
+        if ma == {}:
+            print('%s 获取数据失败！' % i)
+            globals()[listname].remove(i)
+            continue
+        rate = round(globals()[listname].index(i) / len(globals()[listname]) * 100, 2)
+        print(i)
+        for l in range(days):
+            if float(ma[-l-1][8]) > float(ma[-l-1][9]):
+                globals()[listname].remove(i)
+                #print('%s 不符合条件：MA10连续%s日大于MA5。')
+                break
+            if l == days-1:
+                globals()['ma'+i] = (float(ma[-1][8]), float(ma[-1][9]))
+                print('-----成功获取 %s MA5/10历史数据----- %s %%' % (i, rate))
+
+sort_ma_list(4, 'szzx')
 
 # 获取MA5/10历史数据至hist600000
 def get_ma_hist(stock_code):
@@ -390,11 +392,7 @@ def get_list():
     get_sza_list()
     #get_szzx_list()
     #get_szcy_list()
-    a = len(share_list)
-    for i in share_list:
-        check_suspended(i)
-    b = len(share_list)
-    print(a, b, a-b)
+    check_suspended_list()
 
 def insert():
     for i in ashare_list:
