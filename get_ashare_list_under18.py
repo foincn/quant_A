@@ -102,6 +102,27 @@ def ma_now(stock_code):
     #print(ma5, ma10)
     return(ma5, ma10)
 
+def ma_hist(stock_code, days=10, debug=0):
+    #ua_mo = 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_1_1 like Mac OS X) AppleWebKit/604.3.5 (KHTML, like Gecko) Version/11.0 Mobile/15B150 Safari/604.1'
+    #header = {'User-Agent':ua_mo}
+    s = requests.session()
+    s.keep_alive = False
+    url = 'http://api.finance.ifeng.com/akdaily/?code=%s&type=last' % sscode(stock_code)
+    r = s.get(url, proxies=proxies, timeout=2)
+    if debug != 0:
+        return r
+    ma = r.json()['record']
+    ma5 = []
+    ma10 = []
+    if ma == {}:
+        pass
+    else:
+        for l in range(days):
+            ma5.append(float(ma[-l-1][8]))
+            ma10.append(float(ma[-l-1][9]))
+    return(ma5, ma10)
+
+
 #######---plot---#######
 import pylab as pl
 from matplotlib.font_manager import FontProperties  
@@ -370,21 +391,20 @@ def sort_ma_list(listname='share_list', days=10):
     ua_mo = 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_1_1 like Mac OS X) AppleWebKit/604.3.5 (KHTML, like Gecko) Version/11.0 Mobile/15B150 Safari/604.1'
     header = {'User-Agent':ua_mo}
     for i in globals()[listname]:
-        ma_url = 'http://api.finance.ifeng.com/akdaily/?code=%s&type=last' % sscode(i)
-        ma = requests.get(ma_url, headers = header).json()['record']
-        if ma == {}:
+        ma = ma_hist(i)
+        if ma == ([], []):
             print('%s 获取数据失败！' % i)
             globals()[listname].remove(i)
             continue
         rate = round(globals()[listname].index(i) / len(globals()[listname]) * 100, 2)
         print(i)
         for l in range(days):
-            if float(ma[-l-1][8]) > float(ma[-l-1][9]):
+            if ma[0][l] > ma[1][l]:
                 globals()[listname].remove(i)
                 #print('%s 不符合条件：MA10连续%s日大于MA5。')
                 break
             if l == days-1:
-                globals()['ma'+i] = (float(ma[-1][8]), float(ma[-1][9]))
+                globals()['ma'+i] = (ma[1][0], ma[1][0])
                 print('-----成功获取 %s MA5/10历史数据----- %s %%' % (i, rate))
     b = len(globals()[listname])
     print('已经从 %s 移除 %s 支股票，列表中还剩 %s' %(listname, a-b, b) )
