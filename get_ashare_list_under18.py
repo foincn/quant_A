@@ -364,7 +364,7 @@ def sort_price_list(listname='share_list', price=18):
     print('已经从 %s 移除 %s 支股票，列表中还剩 %s' % (listname, a-b, b))
 
 # 筛选share_list中，MA10连续n日大于MA5。
-def sort_ma_list(listname='share_list', days='10'):
+def sort_ma_list(listname='share_list', days=10):
     print('筛选%s中MA10连续%s日大于MA5' % (listname, days))
     a = len(globals()[listname])
     ua_mo = 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_1_1 like Mac OS X) AppleWebKit/604.3.5 (KHTML, like Gecko) Version/11.0 Mobile/15B150 Safari/604.1'
