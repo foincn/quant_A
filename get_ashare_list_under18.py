@@ -301,7 +301,7 @@ def get_szcy_list(listname='share_list'):
             print('%s Added!' % code)
 
 # 去除share_list中停牌的股票
-def check_suspended(stock_code, listname='sharelist'):
+def check_suspended(stock_code, listname='share_list'):
     print('Checking Suspended %s...' % stock_code)
     s = requests.session()
     s.keep_alive = False
@@ -318,7 +318,7 @@ def check_suspended(stock_code, listname='sharelist'):
                 globals()[listname].remove(stock_code)
 
 # 去除share_list中停牌的股票list
-def check_suspended_list(listname='sharelist'):
+def check_suspended_list(listname='share_list'):
     print('Checking list %s...' % listname)
     a = len(globals()[listname])
     s = requests.session()
