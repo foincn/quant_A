@@ -70,7 +70,9 @@ def price_now(stock_code):
     s = requests.session()
     s.keep_alive = False
     url = 'http://api.finance.ifeng.com/aminhis/?code=%s&type=five' % sscode(stock_code)
-    r = s.get(url, timeout=5)
+    r = None
+    while r == None:
+        r = s.get(url, timeout=2)
     if r.text == '':
         print('无法获取 %s 价格。' % stock_code)
         price = ''
@@ -389,11 +391,12 @@ def sort_price_list(listname='share_list', price=18):
         rate = round(globals()[listname].index(i) / len(globals()[listname]) * 100, 2)
         if price_now(i)[0] == '':
             li.remove(i)
+            print('%s 无法获取价格。 %s %%' % (i, rate))
         elif price_now(i)[0] > 18:
             li.remove(i)
-            print('%s 不符合条件。 %s %%' % (i, rate) )
+            print('%s 不符合条件。 %s %%' % (i, rate))
     a = len(globals()[listname])
-    b = len(list)
+    b = len(li)
     globals()[listname] = li
     print('已经从 %s 移除 %s 支股票，列表中还剩 %s' % (listname, a-b, b))
 
