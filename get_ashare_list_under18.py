@@ -83,22 +83,23 @@ def price_now(stock_code):
         average = float(now[4])
     return (price, average)
 
-def ma_now(stock_code):
+def ma_now(stock_code, debug=0):
     today = date.today()
     span = '%s%s%s' % (today.year, today.month, today.day)
     url = 'http://pdfm.eastmoney.com/EM_UBG_PDTI_Fast/api/js?id=%s1&TYPE=k&rtntype=1&QueryStyle=2.2&QuerySpan=%s%%2C1&extend=ma' % (stock_code, span)
     s = requests.session()
     s.keep_alive = False
-    ma = None
-    while ma == None:
-        try:
-            ma = s.get(url, proxies=proxies, timeout=2)
-        except:
-            pass
-    ma_data = ma.text.split('[')[1].split(']')[0].split(',')
-    ma5 = float(ma_data[0])
-    ma10 = float(ma_data[1])
-    ma20 = float(ma_data[2])
+    r = s.get(url, proxies=proxies, timeout=3)
+    if debug != 0:
+        return r
+    if r.text == '({stats:false})':
+        ma5 = ''
+        ma10 = ''
+    else:
+        ma_data = r.text.split('[')[1].split(']')[0].split(',')
+        ma5 = float(ma_data[0])
+        ma10 = float(ma_data[1])
+        ma20 = float(ma_data[2])
     #print(ma5, ma10)
     return(ma5, ma10)
 
@@ -108,7 +109,9 @@ def ma_hist(stock_code, days=10, debug=0):
     s = requests.session()
     s.keep_alive = False
     url = 'http://api.finance.ifeng.com/akdaily/?code=%s&type=last' % sscode(stock_code)
-    r = s.get(url, proxies=proxies, timeout=2)
+    r = None
+    while r == None:
+        r = s.get(url, proxies=proxies, timeout=5)
     if debug != 0:
         return r
     ma = r.json()['record']
@@ -117,9 +120,12 @@ def ma_hist(stock_code, days=10, debug=0):
     if ma == {}:
         pass
     else:
-        for l in range(days):
-            ma5.append(float(ma[-l-1][8]))
-            ma10.append(float(ma[-l-1][9]))
+        if len(ma) < days:
+            pass
+        else:
+            for l in range(days):
+                ma5.append(float(ma[-l-1][8]))
+                ma10.append(float(ma[-l-1][9]))
     return(ma5, ma10)
 
 
@@ -340,8 +346,9 @@ def check_suspended(stock_code, listname='share_list'):
 
 # 去除share_list中停牌的股票list
 def check_suspended_list(listname='share_list'):
+    li = list(globals()[listname])
+    print(len(li))
     print('Checking list %s...' % listname)
-    a = len(globals()[listname])
     s = requests.session()
     s.keep_alive = False
     header = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:56.0) Gecko/20100101 Firefox/56.0'}
@@ -353,61 +360,68 @@ def check_suspended_list(listname='share_list'):
         while r == None:
             r = s.get(url, headers=header, timeout=1)
         if float(r.text.split("\"")[1].split(",")[1]) > 18:
-            globals()[listname].remove(i)
+            li.remove(i)
         elif r.text.split("\"")[1].split(",")[8] == '0':
             if r.text.split("\"")[1].split(",")[10] == '0':
                 if r.text.split("\"")[1].split(",")[12] == '0':
-                    globals()[listname].remove(i)
+                    li.remove(i)
+    a = len(globals()[listname])
     b = len(globals()[listname])
+    globals()[listname] = li
     return(a, b, a-b)
 
 ####################################################
 # 筛选股票
-def sort_list(listname='share_list'):
+def sort_list(listname='share_list', price=18, day=10):
     a = len(globals()[listname])
-    sort_price_list(listname, 18)
-    sort_ma_list(listname, 10)
+    sort_price_list(listname, price)
+    sort_ma_list(listname, day)
     b = len(globals()[listname])
     print('过滤掉%s支股票，还剩%s支股票' % (a-b, b))
 
 # 筛选share_list中，价格低于18元, 并去除停牌。
 def sort_price_list(listname='share_list', price=18):
     print('筛选%s中，价格低于%s元。' % (listname, price))
-    a = len(globals()[listname])
+    li = list(globals()[listname])
+    print(len(li))
     for i in globals()[listname]:
+        print(i)
         rate = round(globals()[listname].index(i) / len(globals()[listname]) * 100, 2)
         if price_now(i)[0] == '':
-            globals()[listname].remove(i)
+            li.remove(i)
         elif price_now(i)[0] > 18:
-            globals()[listname].remove(i)
+            li.remove(i)
             print('%s 不符合条件。 %s %%' % (i, rate) )
-    b = len(globals()[listname])
+    a = len(globals()[listname])
+    b = len(list)
+    globals()[listname] = li
     print('已经从 %s 移除 %s 支股票，列表中还剩 %s' % (listname, a-b, b))
 
 # 筛选share_list中，MA10连续n日大于MA5。
 def sort_ma_list(listname='share_list', days=10):
     print('筛选%s中MA10连续%s日大于MA5' % (listname, days))
-    a = len(globals()[listname])
-    ua_mo = 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_1_1 like Mac OS X) AppleWebKit/604.3.5 (KHTML, like Gecko) Version/11.0 Mobile/15B150 Safari/604.1'
-    header = {'User-Agent':ua_mo}
+    li = list(globals()[listname])
+    print(len(li))
     for i in globals()[listname]:
-        ma = ma_hist(i)
+        rate = round(globals()[listname].index(i) / len(globals()[listname]) * 100, 2)
+        ma = ma_hist(i, days)
         if ma == ([], []):
             print('%s 获取数据失败！' % i)
-            globals()[listname].remove(i)
+            li.remove(i)
             continue
-        rate = round(globals()[listname].index(i) / len(globals()[listname]) * 100, 2)
-        print(i)
         for l in range(days):
             if ma[0][l] > ma[1][l]:
-                globals()[listname].remove(i)
-                #print('%s 不符合条件：MA10连续%s日大于MA5。')
+                li.remove(i)
+                print('%s 不符合条件：MA10连续%s日大于MA5。' % (i, days))
                 break
             if l == days-1:
-                globals()['ma'+i] = (ma[1][0], ma[1][0])
+                globals()['ma'+i] = (ma[0][0], ma[1][0])
                 print('-----成功获取 %s MA5/10历史数据----- %s %%' % (i, rate))
-    b = len(globals()[listname])
+    a = len(globals()[listname])
+    b = len(li)
+    globals()[listname] = li
     print('已经从 %s 移除 %s 支股票，列表中还剩 %s' %(listname, a-b, b) )
+
 
 
 # 获取MA5/10历史数据至hist600000
@@ -439,6 +453,27 @@ def insert():
         insert_data('instance', 'sh_under18', i)
     print('All Data Inserted!')
 
+def ma_monitor(listname='share_list'):
+    global buy_list
+    buy_list = []
+    c = 0
+    while 1:
+        c += 1
+        print('第%s次扫描, 已找到%s支股票。' % (c, len(buy_list)))
+        # time.sleep(10)
+        for i in globals()[listname]:
+            ma_checker(i)
+
+def ma_checker(stock_code):
+    print('检查%s' % stock_code)
+    ma = ma_now(stock_code)
+    if ma[0] > ma[1]:
+        if ma[0] > globals()['ma'+stock_code][0] and  ma[1] > globals()['ma'+stock_code][1]:
+            if stock_code not in buy_list:
+                buy_list.append(stock_code)
+                print('%s买入时机' % stock_code)
+
+
 def get_watchlist():
     global watchlist
     watchlist = []
@@ -457,7 +492,7 @@ def watching(stock_code):
 
 def watch(listname):
     global buy_list
-watch    buy_list = []
+    buy_list = []
     c = 0
     while 1:
         c += 1
@@ -466,6 +501,7 @@ watch    buy_list = []
         for i in globals()[listname]:
             watching(i)
 
+            
 
 get_list()
 delete_form('instance', 'sh_under18')
@@ -480,9 +516,16 @@ get_watchlist()
 #get_hist_data()
 watch('watchlist')
 ##############################
+print('''
 get_list()
 sort_list()
-            
+sort_ma_list()
+ma_monitor()
+''')
+get_szzx_list("szzx")
+sort_ma_list("szzx", 20)
 
+import code
+code.interact(banner = "", local = locals())
 
 
