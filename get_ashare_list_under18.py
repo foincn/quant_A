@@ -175,7 +175,7 @@ def get_list(listname='share_list'):
     get_sza_list()
     #get_szzx_list()
     #get_szcy_list()
-    check_suspended_list()
+    #check_suspended_list()
     print('成功导入 %s 支股票。' % len(globals()[listname]))
 
 # 导入上海A股列表share_list并去除20171201以后上市的股票
@@ -325,7 +325,8 @@ def check_suspended_list(listname='share_list'):
     s.keep_alive = False
     header = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:56.0) Gecko/20100101 Firefox/56.0'}
     for i in globals()[listname]:
-        print('Checking Suspended %s...' % i)
+        rate = round(globals()[listname].index(i) / len(globals()[listname]) * 100, 2)
+        print('Checking Suspended %s...     %s %%' % (i, rate))
         url = 'http://hq.sinajs.cn/list=%s' % sscode(i)
         r = None
         while r == None:
@@ -348,13 +349,15 @@ def sort_list(listname='share_list'):
     b = len(globals()[listname])
     print('过滤掉%s支股票，还剩%s支股票' % (a-b, b))
 
-# 筛选share_list中，价格低于18元。
+# 筛选share_list中，价格低于18元, 并去除停牌。
 def sort_price_list(listname='share_list', price=18):
     print('筛选%s中，价格低于%s元。' % (listname, price))
     a = len(globals()[listname])
     for i in globals()[listname]:
         rate = round(globals()[listname].index(i) / len(globals()[listname]) * 100, 2)
-        if price_now(i)[0] > 18:
+        if price_now(i)[0] == '':
+            globals()[listname].remove(i)
+        elif price_now(i)[0] > 18:
             globals()[listname].remove(i)
             print('%s 不符合条件。 %s %%' % (i, rate) )
     b = len(globals()[listname])
@@ -434,7 +437,7 @@ def watching(stock_code):
 
 def watch(listname):
     global buy_list
-    buy_list = []
+watch    buy_list = []
     c = 0
     while 1:
         c += 1
