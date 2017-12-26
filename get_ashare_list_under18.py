@@ -161,8 +161,14 @@ def plot_list(listname):
 
 
 #########################
-# 导入上海A股列表ashare_list并去除20171201以后上市的股票
-def get_sha_list():
+# 导入上海A股列表share_list并去除20171201以后上市的股票
+def get_sha_list(listname='share_list'):
+    listname = str(listname)
+    if listname in dir():
+        if listname != 'share_list':
+            globals()[listname] = []
+    else:
+        globals()[listname] = []
     url = 'http://query.sse.com.cn/security/stock/getStockListData2.do?&stockType=1&pageHelp.beginPage=1&pageHelp.pageSize=2000'
     header = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:56.0) Gecko/20100101 Firefox/56.0',
@@ -177,14 +183,21 @@ def get_sha_list():
             d = listing_date.split('-')
             n = int(d[0]+d[1]+d[2])
             if n < 20171201:
-                ashare_list.append(code)
+                globals()[listname].append(code)
                 print('%s Added!' % code)
         else: 
-            ashare_list.append(code)
+            globals()[listname].append(code)
             print('%s Added!' % code)
     print('Found %d Stocks!' % len(ashare_list))
 
-def get_sza_list():
+# 导入深圳A股列表share_list并去除20171201以后上市的股票
+def get_sza_list(listname='share_list'):
+    listname = str(listname)
+    if listname in dir():
+        if listname != 'share_list':
+            globals()[listname] = []
+    else:
+        globals()[listname] = []
     s = requests.session()
     s.keep_alive = False
     index_url = 'http://www.szse.cn/szseWeb/FrontController.szse?ACTIONID=7&AJAX=AJAX-FALSE&CATALOGID=1110&TABKEY=tab2&tab2PAGENO=1'
@@ -210,13 +223,20 @@ def get_sza_list():
                 d = listing_date.split('-')
                 n = int(d[0]+d[1]+d[2])
                 if n < 20171201:
-                    ashare_list.append(code)
+                    globals()[listname].append(code)
                     print('%s Added!' % code)
             else: 
-                ashare_list.append(code)
+                globals()[listname].append(code)
                 print('%s Added!' % code)
 
-def get_szzx_list():
+# 导入深圳中小板列表share_list
+def get_szzx_list(listname='share_list'):
+    listname = str(listname)
+    if listname in dir():
+        if listname != 'share_list':
+            globals()[listname] = []
+    else:
+        globals()[listname] = []
     s = requests.session()
     s.keep_alive = False
     index_url = 'http://www.szse.cn/szseWeb/FrontController.szse?ACTIONID=7&AJAX=AJAX-FALSE&CATALOGID=1110&TABKEY=tab5&tab5PAGENO=1'
@@ -235,10 +255,17 @@ def get_szzx_list():
         source += source1
         for l in source:
             code = l.a.u.text
-            ashare_list.append(code)
+            globals()[listname].append(code)
             print('%s Added!' % code)
 
-def get_szcy_list():
+# 导入深圳创业板列表share_list
+def get_szcy_list(listname='share_list'):
+    listname = str(listname)
+    if listname in dir():
+        if listname != 'share_list':
+            globals()[listname] = []
+    else:
+        globals()[listname] = []
     s = requests.session()
     s.keep_alive = False
     index_url = 'http://www.szse.cn/szseWeb/FrontController.szse?ACTIONID=7&AJAX=AJAX-FALSE&CATALOGID=1110&TABKEY=tab6&tab6PAGENO=1'
@@ -257,11 +284,12 @@ def get_szcy_list():
         source += source1
         for l in source:
             code = l.a.u.text
-            ashare_list.append(code)
+            globals()[listname].append(code)
             print('%s Added!' % code)
 
-# 去除ashare_list中停牌的股票
-def check_suspended(stock_code):
+# 去除share_list中停牌的股票
+def check_suspended(stock_code, listname='sharelist'):
+    listname = str(listname)
     print('Checking Suspended %s...' % stock_code)
     s = requests.session()
     s.keep_alive = False
@@ -271,11 +299,13 @@ def check_suspended(stock_code):
     while r == None:
         r = s.get(url, headers=header, timeout=1)
     if float(r.text.split("\"")[1].split(",")[1]) > 18:
-        ashare_list.remove(stock_code)
+        globals()[listname].remove(stock_code)
     elif r.text.split("\"")[1].split(",")[8] == '0':
         if r.text.split("\"")[1].split(",")[10] == '0':
             if r.text.split("\"")[1].split(",")[12] == '0':
-                ashare_list.remove(stock_code)
+                globals()[listname].remove(stock_code)
+
+
 
 # MA10连续n日大于MA5,导出至watchlist
 def sort_watchlist(stock_code):
@@ -325,7 +355,7 @@ def sort_watchlist(stock_code):
 def get_watchlist():
     global watchlist
     watchlist = []
-    for i in ashare_list:
+    for i in share_list:
         sort_watchlist(i)
     print('wacthlist finished!')
     print(len(watchlist))
@@ -346,7 +376,7 @@ def get_ma_hist(stock_code):
     if ma5_2 < ma5_1:
         globals()['hist'+str(stock_code)] = (ma5_1, ma10_1)
     else:
-        ashare_list.remove(stock_code)
+        share_list.remove(stock_code)
 
 def get_hist_data():
     for i in watchlist:
@@ -354,14 +384,16 @@ def get_hist_data():
     print('All HIST DATA GOT!')
 
 def get_list():
-    global ashare_list
-    ashare_list = []
+    global share_list
+    share_list = []
     get_sha_list()
     get_sza_list()
-    a = len(ashare_list)
-    for i in ashare_list:
+    #get_szzx_list()
+    #get_szcy_list()
+    a = len(share_list)
+    for i in share_list:
         check_suspended(i)
-    b = len(ashare_list)
+    b = len(share_list)
     print(a, b, a-b)
 
 def insert():
