@@ -72,7 +72,10 @@ def price_now(stock_code):
     url = 'http://api.finance.ifeng.com/aminhis/?code=%s&type=five' % sscode(stock_code)
     r = None
     while r == None:
-        r = s.get(url, timeout=2)
+        try:
+            r = s.get(url, timeout=3)
+        except:
+            pass
     if r.text == '':
         print('无法获取 %s 价格。' % stock_code)
         price = ''
@@ -91,7 +94,12 @@ def ma_now(stock_code, debug=0):
     url = 'http://pdfm.eastmoney.com/EM_UBG_PDTI_Fast/api/js?id=%s1&TYPE=k&rtntype=1&QueryStyle=2.2&QuerySpan=%s%%2C1&extend=ma' % (stock_code, span)
     s = requests.session()
     s.keep_alive = False
-    r = s.get(url, proxies=proxies, timeout=3)
+    r = None
+    while r == None:
+        try:
+            r = s.get(url, proxies=proxies, timeout=3)
+        except:
+            pass
     if debug != 0:
         return r
     if r.text == '({stats:false})':
@@ -113,7 +121,10 @@ def ma_hist(stock_code, days=10, debug=0):
     url = 'http://api.finance.ifeng.com/akdaily/?code=%s&type=last' % sscode(stock_code)
     r = None
     while r == None:
-        r = s.get(url, proxies=proxies, timeout=5)
+        try:
+            r = s.get(url, proxies=proxies, timeout=5)
+        except:
+            pass
     if debug != 0:
         return r
     ma = r.json()['record']
@@ -202,14 +213,15 @@ def get_list(listname='share_list'):
     globals()[listname] = []
     get_sha_list()
     get_sza_list()
-    #get_szzx_list()
-    #get_szcy_list()
+    get_szzx_list()
+    get_szcy_list()
+    globals()[listname] = list(set(globals()[listname]))
     #check_suspended_list()
     print('成功导入 %s 支股票。' % len(globals()[listname]))
 
 # 导入上海A股列表share_list并去除20171201以后上市的股票
 def get_sha_list(listname='share_list'):
-    if listname in dir():
+    if listname in globals().keys():
         if listname != 'share_list':
             globals()[listname] = []
     else:
@@ -237,7 +249,7 @@ def get_sha_list(listname='share_list'):
 
 # 导入深圳A股列表share_list并去除20171201以后上市的股票
 def get_sza_list(listname='share_list'):
-    if listname in dir():
+    if listname in globals().keys():
         if listname != 'share_list':
             globals()[listname] = []
     else:
@@ -275,7 +287,7 @@ def get_sza_list(listname='share_list'):
 
 # 导入深圳中小板列表share_list
 def get_szzx_list(listname='share_list'):
-    if listname in dir():
+    if listname in globals().keys():
         if listname != 'share_list':
             globals()[listname] = []
     else:
@@ -303,7 +315,7 @@ def get_szzx_list(listname='share_list'):
 
 # 导入深圳创业板列表share_list
 def get_szcy_list(listname='share_list'):
-    if listname in dir():
+    if listname in globals().keys():
         if listname != 'share_list':
             globals()[listname] = []
     else:
@@ -382,17 +394,18 @@ def sort_list(listname='share_list', price=18, day=10):
     print('过滤掉%s支股票，还剩%s支股票' % (a-b, b))
 
 # 筛选share_list中，价格低于18元, 并去除停牌。
-def sort_price_list(listname='share_list', price=18):
-    print('筛选%s中，价格低于%s元。' % (listname, price))
+def sort_price_list(listname='share_list', target_price=18):
+    print('筛选%s中，价格低于%s元。' % (listname, target_price))
     li = list(globals()[listname])
     print(len(li))
     for i in globals()[listname]:
         print(i)
         rate = round(globals()[listname].index(i) / len(globals()[listname]) * 100, 2)
-        if price_now(i)[0] == '':
+        price = price_now(i)[0]
+        if price == '':
             li.remove(i)
             print('%s 无法获取价格。 %s %%' % (i, rate))
-        elif price_now(i)[0] > 18:
+        elif price > target_price:
             li.remove(i)
             print('%s 不符合条件。 %s %%' % (i, rate))
     a = len(globals()[listname])
@@ -521,8 +534,13 @@ watch('watchlist')
 ##############################
 print('''
 get_list()
+    get_sha_list()
+    get_sza_list()
+    get_szzx_list()
+    get_szcy_list()
 sort_list()
-sort_ma_list()
+    sort_price_list()
+    sort_ma_list(）
 ma_monitor()
 ''')
 get_szzx_list("szzx")
