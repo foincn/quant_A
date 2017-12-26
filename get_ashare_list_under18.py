@@ -70,11 +70,17 @@ def price_now(stock_code):
     s = requests.session()
     s.keep_alive = False
     url = 'http://api.finance.ifeng.com/aminhis/?code=%s&type=five' % sscode(stock_code)
-    now = s.get(now_url, timeout=5).json()[-1]['record'][-1]
-    # Price
-    price = float(now[1])
-    # Average
-    average = float(now[4])
+    r = s.get(url, timeout=5)
+    if r.text == '':
+        print('无法获取 %s 价格。' % stock_code)
+        price = ''
+        average = ''
+    else:
+        now = r.json()[-1]['record'][-1]
+        # Price
+        price = float(now[1])
+        # Average
+        average = float(now[4])
     return (price, average)
 
 def ma_now(stock_code):
@@ -162,6 +168,16 @@ def plot_list(listname):
 
 
 ##############################################
+# 导入股票
+def get_list(listname='share_list'):
+    globals()[listname] = []
+    get_sha_list()
+    get_sza_list()
+    #get_szzx_list()
+    #get_szcy_list()
+    check_suspended_list()
+    print('成功导入 %s 支股票。' % len(globals()[listname]))
+
 # 导入上海A股列表share_list并去除20171201以后上市的股票
 def get_sha_list(listname='share_list'):
     if listname in dir():
@@ -325,21 +341,29 @@ def check_suspended_list(listname='sharelist'):
 
 ####################################################
 # 筛选股票
-def sort(listname='share_list'):
-    
+def sort_list(listname='share_list'):
+    a = len(globals()[listname])
+    sort_price_list(listname, 18)
+    sort_ma_list(listname, 10)
+    b = len(globals()[listname])
+    print('过滤掉%s支股票，还剩%s支股票' % (a-b, b))
 
-def get_watchlist():
-    global watchlist
-    watchlist = []
-    for i in share_list:
-        sort_watchlist(i)
-    print('wacthlist finished!')
-    print(len(watchlist))
+# 筛选share_list中，价格低于18元。
+def sort_price_list(listname='share_list', price=18):
+    print('筛选%s中，价格低于%s元。' % (listname, price))
+    a = len(globals()[listname])
+    for i in globals()[listname]:
+        rate = round(globals()[listname].index(i) / len(globals()[listname]) * 100, 2)
+        if price_now(i)[0] > 18:
+            globals()[listname].remove(i)
+            print('%s 不符合条件。 %s %%' % (i, rate) )
+    b = len(globals()[listname])
+    print('已经从 %s 移除 %s 支股票，列表中还剩 %s' % (listname, a-b, b))
 
-
-# MA10连续n日大于MA5,导出至watchlist
-def sort_ma_list(days, listname='share_list'):
+# 筛选share_list中，MA10连续n日大于MA5。
+def sort_ma_list(listname='share_list', days='10'):
     print('筛选%s中MA10连续%s日大于MA5' % (listname, days))
+    a = len(globals()[listname])
     ua_mo = 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_1_1 like Mac OS X) AppleWebKit/604.3.5 (KHTML, like Gecko) Version/11.0 Mobile/15B150 Safari/604.1'
     header = {'User-Agent':ua_mo}
     for i in globals()[listname]:
@@ -359,8 +383,9 @@ def sort_ma_list(days, listname='share_list'):
             if l == days-1:
                 globals()['ma'+i] = (float(ma[-1][8]), float(ma[-1][9]))
                 print('-----成功获取 %s MA5/10历史数据----- %s %%' % (i, rate))
+    b = len(globals()[listname])
+    print('已经从 %s 移除 %s 支股票，列表中还剩 %s' %(listname, a-b, b) )
 
-sort_ma_list(4, 'szzx')
 
 # 获取MA5/10历史数据至hist600000
 def get_ma_hist(stock_code):
@@ -385,19 +410,19 @@ def get_hist_data():
         get_ma_hist(i)
     print('All HIST DATA GOT!')
 
-def get_list():
-    global share_list
-    share_list = []
-    get_sha_list()
-    get_sza_list()
-    #get_szzx_list()
-    #get_szcy_list()
-    check_suspended_list()
 
 def insert():
     for i in ashare_list:
         insert_data('instance', 'sh_under18', i)
     print('All Data Inserted!')
+
+def get_watchlist():
+    global watchlist
+    watchlist = []
+    for i in share_list:
+        sort_watchlist(i)
+    print('wacthlist finished!')
+    print(len(watchlist))
 
 def watching(stock_code):
     hist = globals()['hist'+str(stock_code)]
@@ -431,7 +456,9 @@ get_watchlist()
 #plot_list('watchlist')
 #get_hist_data()
 watch('watchlist')
-
+##############################
+get_list()
+sort_list()
             
 
 
