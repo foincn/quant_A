@@ -3,6 +3,7 @@
 import requests
 import sqlite3
 import threading
+from multiprocessing import Process
 import time
 from bs4 import BeautifulSoup
 from datetime import date
@@ -399,7 +400,7 @@ def sort_price_list(listname='share_list', target_price=18):
     li = list(globals()[listname])
     print(len(li))
     for i in globals()[listname]:
-        print(i)
+        print('检查 %s 价格是否低于%s元' % (i, target_price))
         rate = round(globals()[listname].index(i) / len(globals()[listname]) * 100, 2)
         price = price_now(i)[0]
         if price == '':
@@ -469,19 +470,18 @@ def insert():
         insert_data('instance', 'sh_under18', i)
     print('All Data Inserted!')
 
-def ma_monitor(listname='share_list'):
+def ma_monitor(listname='share_list', count=9999):
     global buy_list
     buy_list = []
     c = 0
-    while 1:
+    while c < count:
         c += 1
-        print('第%s次扫描, 已找到%s支股票。' % (c, len(buy_list)))
+        print('第%s次扫描, 一共%s支股票，已找到%s支股票符合。' % (c, len(globals()[listname]), len(buy_list)))
         # time.sleep(10)
         for i in globals()[listname]:
             ma_checker(i)
 
 def ma_checker(stock_code):
-    print('检查%s' % stock_code)
     ma = ma_now(stock_code)
     if ma[0] > ma[1]:
         if ma[0] > globals()['ma'+stock_code][0] and  ma[1] > globals()['ma'+stock_code][1]:
@@ -489,6 +489,9 @@ def ma_checker(stock_code):
                 buy_list.append(stock_code)
                 print('%s买入时机' % stock_code)
 
+def ma_monitor_start(listname='share_list', count=9999):
+    global b
+    b = Process(target=ma_monitor, args=())
 
 def get_watchlist():
     global watchlist
@@ -540,7 +543,7 @@ get_list()
     get_szcy_list()
 sort_list()
     sort_price_list()
-    sort_ma_list(）
+    sort_ma_list()
 ma_monitor()
 ''')
 get_szzx_list("szzx")
