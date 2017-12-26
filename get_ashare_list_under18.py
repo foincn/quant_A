@@ -204,7 +204,7 @@ def get_sha_list(listname='share_list'):
         else: 
             globals()[listname].append(code)
             print('%s Added!' % code)
-    print('Found %d Stocks!' % len(ashare_list))
+    print('Found %d Stocks!' % len(globals()[listname]))
 
 # 导入深圳A股列表share_list并去除20171201以后上市的股票
 def get_sza_list(listname='share_list'):
