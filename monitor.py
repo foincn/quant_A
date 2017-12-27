@@ -453,12 +453,14 @@ def insert_ma_data(stock_code, ma_now):
     price = str(prices[0])
     average = str(prices[1])
     name = share_name(stock_code)
+    ma5 = ma_now[0]
+    ma10 = ma_now[1]
     time = datetime.now().strftime('%H:%M:%S')
     formname = datetime.now().strftime('\"%y-%m-%d\"')
     conn = sqlite3.connect('database/MA.db')
     c = conn.cursor()
     print(stock_code, name, price, average, time)
-    c.execute("INSERT INTO %s (CODE, NAME, PRICE, AVERAGE, TIME) VALUES (?, ?, ?, ?, ?)" % formname,(stock_code, name, price, average, time))
+    c.execute("INSERT OR IGNORE INTO %s (CODE, NAME, PRICE, AVERAGE, MA5, MA10, TIME) VALUES (?, ?, ?, ?, ?)" % formname,(stock_code, name, price, average, ma5, ma10, time))
     conn.commit()
     conn.close()
     print('写入 %s 数据成功！' % stock_code)
