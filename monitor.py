@@ -231,9 +231,9 @@ def get_sza_page(page_num, afterdate=20171201):
             d = listing_date.split('-')
             n = int(d[0]+d[1]+d[2])
             if n < afterdate:
-                li.append(code)
+                sza.append(code)
         else: 
-            li.append(code)
+            sza.append(code)
 
 def get_szzx_page(page_num):
     # print('获取第%s页数据。' % page_num)
@@ -256,7 +256,7 @@ def get_szzx_page(page_num):
     source += source1
     for l in source:
         code = l.a.u.text
-        li.append(code)
+        szzx.append(code)
 
 def get_szcy_page(page_num):
     # print('获取第%s页数据。' % page_num)
@@ -279,7 +279,7 @@ def get_szcy_page(page_num):
     source += source1
     for l in source:
         code = l.a.u.text
-        li.append(code)
+        szcy.append(code)
 
 
 ##############==============================================############
@@ -557,6 +557,24 @@ def insert_ma_data(stock_code, ma_now):
     conn.close()
     print('写入 %s 数据成功！' % stock_code)
 
+def help():
+    print('''
+    get_list()
+        get_sha_list()
+        get_sza_list()
+        get_szzx_list()
+        get_szcy_list()
+    sort_list()
+        sort_price_list
+        sort_ma_list
+    ma_monitor_start()
+    ma_monitor_stop()
+    -plot_list('listname')
+    ''')
+
+help()
 
 
+import os
+os.system("pause")
 
