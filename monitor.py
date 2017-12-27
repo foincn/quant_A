@@ -4,6 +4,7 @@ import requests
 import sqlite3
 import threading
 import time
+import os
 from bs4 import BeautifulSoup
 from datetime import date
 from datetime import datetime
@@ -37,6 +38,17 @@ def share_name(code):
     name = r.text.split("\"")[1].split(",",1)[0]
     return name
 
+def share_market(code):
+    code = str(code)
+    if code[0] =='6':
+        return('沪市主板')
+    elif code[0] =='3':
+        return('创业板')
+    else:
+        if code[2] == '0':
+            return('深市主板')
+        else:
+            return('中小板')
 
 #######---get-data---#######
 
@@ -114,6 +126,81 @@ def ma_hist(stock_code, days=10, debug=0):
                 ma5.append(float(ma[-l-1][8]))
                 ma10.append(float(ma[-l-1][9]))
     return(ma5, ma10)
+
+##################---plot---########################
+import pylab as pl
+from matplotlib.font_manager import FontProperties  
+import platform
+
+def plot_ma(stock_code, MA5, MA10, DATE, listname):
+    if os.path.exists('MA曲线图/%s' % listname) == False:
+        os.makedirs('MA曲线图/%s' % listname)
+    if platform.system() == 'Linux':
+        font = FontProperties(fname="/usr/share/fonts/opentype/noto/NotoSansCJK-Medium.ttc", size=14)
+    elif platform.system() == 'Windows':
+        font = FontProperties(fname="C:\\Windows\\Fonts\\Microsoft YaHei UI\\msyh.ttc", size=14)
+    elif platform.system() == 'Darwin':
+        font = FontProperties(fname="/Library/Fonts/STHeiti Medium.ttc", size=14)
+    title = '%s %s' % (stock_code, share_name(stock_code))
+    pl.title(title, fontproperties=font)
+    a, = pl.plot(DATE, MA5, 'r-')
+    b, = pl.plot(DATE, MA10, 'b-')
+    pl.legend([a, b], ('MA5', 'MA10'), numpoints=1)
+    pl.savefig('MA曲线图/%s/%s.png' % (listname, sscode(stock_code)))
+    pl.close()
+    print('Plot %s success' % title)
+
+def get_ma(stock_code):
+    ua_mo = 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_1_1 like Mac OS X) AppleWebKit/604.3.5 (KHTML, like Gecko) Version/11.0 Mobile/15B150 Safari/604.1'
+    header = {'User-Agent':ua_mo}
+    ma_url = 'http://api.finance.ifeng.com/akdaily/?code=%s&type=last' % sscode(stock_code)
+    now_url = 'http://api.finance.ifeng.com/aminhis/?code=%s&type=five' % sscode(stock_code)
+    now = requests.get(now_url, headers = header).json()[-1]['record'][-1]
+    ma = requests.get(ma_url, headers = header).json()['record']
+    # MA5
+    ma5_now = float(now[4])
+    ma5_1 = float(ma[-1][8])
+    ma5_2 = float(ma[-2][8])
+    ma5_3 = float(ma[-3][8])
+    ma5_4 = float(ma[-4][8])
+    ma5_5 = float(ma[-5][8])
+    ma5_6 = float(ma[-6][8])
+    ma5_7 = float(ma[-7][8])
+    ma5_8 = float(ma[-8][8])
+    ma5_9 = float(ma[-9][8])
+    ma5_10 = float(ma[-10][8])
+    # MA10
+    ma10_now = float(now[5])
+    ma10_1 = float(ma[-1][9])
+    ma10_2 = float(ma[-2][9])
+    ma10_3 = float(ma[-3][9])
+    ma10_4 = float(ma[-4][9])
+    ma10_5 = float(ma[-5][9])
+    ma10_6 = float(ma[-6][9])
+    ma10_7 = float(ma[-7][9])
+    ma10_8 = float(ma[-8][9])
+    ma10_9 = float(ma[-9][9])
+    ma10_10 = float(ma[-10][9])
+    ma5_list = [ma5_1, ma5_2, ma5_3, ma5_4, ma5_5, ma5_6, ma5_7, ma5_8, ma5_9, ma5_10]
+    ma10_list = [ma10_1, ma10_2, ma10_3, ma10_4, ma10_5, ma10_6, ma10_7, ma10_8, ma10_9, ma10_10]
+    date_list = []
+    for i in range(-1, -11, -1):
+        date_list.append(ma[i][0].split('-',1)[1])
+    return(stock_code, ma5_list, ma10_list, date_list)
+
+def plot_images(CODE, listname):
+    a = get_ma(CODE)
+    plot_ma(a[0], a[1], a[2], a[3], listname)
+
+def plot_list(listname):
+    for i in globals()[str(listname)]:
+        try:
+            plot_images(i, listname)
+        except:
+            pass
+
+
+
 
 
 #################--load-pages--####################
@@ -210,6 +297,8 @@ def get_list(listname='share_list'):
 
 # 导入上海A股列表share_list并去除20171201以后上市的股票
 def get_sha_list(listname='share_list', afterdate=20171201):
+    global sha
+    sha = []
     if listname in globals().keys():
         if listname != 'share_list':
             globals()[listname] = []
@@ -221,7 +310,6 @@ def get_sha_list(listname='share_list', afterdate=20171201):
         'Referer': 'http://www.sse.com.cn/assortment/stock/list/share/'
     }
     stock_data = requests.get(url, headers = header).json()['pageHelp']['data']
-    li = []
     for i in range(len(stock_data)):
         code = stock_data[i]['SECURITY_CODE_A']
         listing_date = stock_data[i]['LISTING_DATE']
@@ -229,16 +317,17 @@ def get_sha_list(listname='share_list', afterdate=20171201):
             d = listing_date.split('-')
             n = int(d[0]+d[1]+d[2])
             if n < afterdate:
-                globals()[listname].append(code)
-                li.append(code)
+                sha.append(code)
         else: 
             globals()[listname].append(code)
-            li.append(code)
-    print('从 沪A 成功导入%s支股票。' % len(li))
+            sha.append(code)
+    globals()[listname] = sha
+    print('从 沪A 成功导入%s支股票。' % len(sha))
 
 # 导入深圳A股列表share_list并去除20171201以后上市的股票
 def get_sza_list(listname='share_list', afterdate=20171201):
-    global li
+    global sza
+    sza = []
     if listname in globals().keys():
         if listname != 'share_list':
             globals()[listname] = []
@@ -250,7 +339,6 @@ def get_sza_list(listname='share_list', afterdate=20171201):
     index_html = s.get(index_url).content
     index_soup = BeautifulSoup(index_html, "html.parser")
     index = int(index_soup.select('td')[-3].text.split()[1][1:-1])
-    li = []
     threads = []
     print('正在获取深A列表，一共%s页。' % (index+1))
     for i in range(index):
@@ -260,12 +348,13 @@ def get_sza_list(listname='share_list', afterdate=20171201):
         a.start()
     for t in threads:
         t.join()
-    globals()[listname] += li
-    print('从 深A 成功导入%s %s支股票。' % (listname, len(li)))
+    globals()[listname] += sza
+    print('从 深A 成功导入%s %s支股票。' % (listname, len(sza)))
 
 # 导入深圳中小板share_list
 def get_szzx_list(listname='share_list'):
-    global li
+    global szzx
+    szzx = []
     if listname in globals().keys():
         if listname != 'share_list':
             globals()[listname] = []
@@ -277,7 +366,6 @@ def get_szzx_list(listname='share_list'):
     index_html = s.get(index_url).content
     index_soup = BeautifulSoup(index_html, "html.parser")
     index = int(index_soup.select('td')[-3].text.split()[1][1:-1])
-    li = []
     threads = []
     print('正在获取深圳中小板列表，一共%s页。' % (index+1))
     for i in range(index):
@@ -287,12 +375,13 @@ def get_szzx_list(listname='share_list'):
         a.start()
     for t in threads:
         t.join()
-    globals()[listname] += li
-    print('从 深圳中小板 成功导入%s %s支股票。' % (listname, len(li)))
+    globals()[listname] += szzx
+    print('从 深圳中小板 成功导入%s %s支股票。' % (listname, len(szzx)))
 
 # 导入深圳创业板share_list
 def get_szcy_list(listname='share_list'):
-    global li
+    global szcy
+    szcy = []
     if listname in globals().keys():
         if listname != 'share_list':
             globals()[listname] = []
@@ -304,7 +393,6 @@ def get_szcy_list(listname='share_list'):
     index_html = s.get(index_url).content
     index_soup = BeautifulSoup(index_html, "html.parser")
     index = int(index_soup.select('td')[-3].text.split()[1][1:-1])
-    li = []
     threads = []
     print('正在获取深圳创业板列表，一共%s页。' % (index+1))
     for i in range(index):
@@ -314,8 +402,8 @@ def get_szcy_list(listname='share_list'):
         a.start()
     for t in threads:
         t.join()
-    globals()[listname] += li
-    print('从 深圳创业板 成功导入%s %s支股票。' % (listname, len(li)))
+    globals()[listname] += szcy
+    print('从 深圳创业板 成功导入%s %s支股票。' % (listname, len(szcy)))
 
 ############################==================================##########################
 ###多线程筛选
@@ -432,6 +520,8 @@ def ma_checker(stock_code):
 
 # 在数据库'MA'中建立表 '17-12-27'/ CODE/ NAME/ PRICE/ AVERAGE/ TIME/ TIMECROSS/ OTHER
 def create_ma_form(dbname):
+    if os.path.exists('database') == False:
+        os.makedirs('database')
     date = datetime.now().strftime('\"%y-%m-%d\"')
     conn = sqlite3.connect('database/%s.db' % dbname)
     c = conn.cursor()
@@ -444,7 +534,7 @@ def create_ma_form(dbname):
         MA10  TEXT,
         TIME   TEXT,
         TIMECROSS   TEXT,
-        OTHER   TEXT);''' % date)
+        MARKET   TEXT);''' % date)
     conn.commit()
     conn.close()
     print("Form %s Created in %s!" % (date, dbname))
@@ -462,7 +552,7 @@ def insert_ma_data(stock_code, ma_now):
     conn = sqlite3.connect('database/MA.db')
     c = conn.cursor()
     print(stock_code, name, price, average, time)
-    c.execute("INSERT OR IGNORE INTO %s (CODE, NAME, PRICE, AVERAGE, MA5, MA10, TIME) VALUES (?, ?, ?, ?, ?, ?, ?)" % formname,(stock_code, name, price, average, ma5, ma10, time))
+    c.execute("INSERT OR IGNORE INTO %s (CODE, NAME, PRICE, AVERAGE, MA5, MA10, TIME, MARKET) VALUES (?, ?, ?, ?, ?, ?, ?, ?)" % formname,(stock_code, name, price, average, ma5, ma10, time, share_market(stock_code)))
     conn.commit()
     conn.close()
     print('写入 %s 数据成功！' % stock_code)
