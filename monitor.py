@@ -416,7 +416,7 @@ def ma_monitor(listname='share_list', count=9999):
             end_time = datetime.now()
             timedelsta = (end_time - start_time).seconds
             print('第%s次扫描, 一共%s支股票，已找到%s支股票符合。 本次扫描耗时%s秒。' % (c, len(globals()[listname]), len(buy_list), timedelsta))
-            end_time = start_time
+            start_time = end_time
 
 # Ma监视条件
 def ma_checker(stock_code):
