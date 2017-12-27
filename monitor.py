@@ -3,7 +3,6 @@
 import requests
 import sqlite3
 import threading
-from multiprocessing import Process
 import time
 from bs4 import BeautifulSoup
 from datetime import date
