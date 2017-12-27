@@ -388,34 +388,37 @@ def sort_ma_list(listname='share_list', days=10):
     globals()[listname] = li
     print('已经从 %s 移除 %s 支股票，列表中还剩 %s' % (listname, a-b, b))
 
-
-###########################
+##########################################
 # 监视程序
-# 启动MA监视
+# 启动关闭MA监视
 def ma_monitor_start(listname='share_list', count=9999):
     global a
     a = threading.Thread(target=ma_monitor, args=())
     a.start()
 
+def ma_monitor_stop():
+    globals()['ma_monitor_status'] = True
+    print('监视结束！')
+
 # MA监视循环
 def ma_monitor(listname='share_list', count=9999):
     global buy_list
-    global stop
-    stop = False
+    global ma_monitor_status
+    ma_monitor_status = False
     buy_list = []
     create_ma_form('MA')
     c = 0
     print('开始扫描，一共%s次。' % count)
     start_time = datetime.now()
     while c < count:
-        while stop != True:
+        while ma_monitor_status != True:
             c += 1
             # time.sleep(10)
             for i in globals()[listname]:
                 ma_checker(i)
             end_time = datetime.now()
             timedelsta = (end_time - start_time).seconds
-            print('第%s次扫描, 一共%s支股票，已找到%s支股票符合。 本次扫描耗时%s秒。' % (c, len(globals()[listname]), len(buy_list), timedelsta))
+            print('第%s次扫描完成, 一共%s支股票，已找到%s支股票符合。 本次扫描耗时%s秒。' % (c, len(globals()[listname]), len(buy_list), timedelsta))
             start_time = end_time
 
 # Ma监视条件
@@ -460,11 +463,11 @@ def insert_ma_data(stock_code, ma_now):
     conn = sqlite3.connect('database/MA.db')
     c = conn.cursor()
     print(stock_code, name, price, average, time)
-    c.execute("INSERT OR IGNORE INTO %s (CODE, NAME, PRICE, AVERAGE, MA5, MA10, TIME) VALUES (?, ?, ?, ?, ?)" % formname,(stock_code, name, price, average, ma5, ma10, time))
+    c.execute("INSERT OR IGNORE INTO %s (CODE, NAME, PRICE, AVERAGE, MA5, MA10, TIME) VALUES (?, ?, ?, ?, ?, ?, ?)" % formname,(stock_code, name, price, average, ma5, ma10, time))
     conn.commit()
     conn.close()
     print('写入 %s 数据成功！' % stock_code)
 
 
 
-    
+
