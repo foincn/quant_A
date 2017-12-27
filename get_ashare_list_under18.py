@@ -51,7 +51,7 @@ def create_form(dbname, formname):
     conn = sqlite3.connect('database/%s.db' % dbname)
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS %s
-        (CODE INTEGER PRIMARY KEY UNIQUE,
+        (CODE TEXT PRIMARY KEY UNIQUE,
         NAME   TEXT);''' % formname)
     conn.commit()
     conn.close()
