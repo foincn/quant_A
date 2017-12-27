@@ -79,3 +79,13 @@ def insert_ma_data(stock_code, ma_now):
     conn.close()
     print('写入 %s 数据成功！' % stock_code)
 
+
+if __name__ != '__main__':
+    print('''
+    ma_monitor_start(listname='share_list', count=9999)
+    ma_monitor_stop()
+    ''')
+    
+    
+    
+    
