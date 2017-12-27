@@ -386,5 +386,31 @@ def sort_ma_list(listname='share_list', days=10):
     print('已经从 %s 移除 %s 支股票，列表中还剩 %s' % (listname, a-b, b))
 
 
+###########################
+def ma_monitor_start(listname='share_list', count=9999):
+    global a
+    a = threading.Thread(target=ma_monitor, args=())
+    a.start()
 
+
+def ma_monitor(listname='share_list', count=9999):
+    global buy_list
+    buy_list = []
+    c = 0
+    while c < count:
+        c += 1
+        print('第%s次扫描, 一共%s支股票，已找到%s支股票符合。' % (c, len(globals()[listname]), len(buy_list)))
+        # time.sleep(10)
+        for i in globals()[listname]:
+            ma_checker(i)
+
+def ma_checker(stock_code):
+    ma = ma_now(stock_code)
+    if ma[0] > ma[1]:
+        if ma[0] > globals()['ma'+stock_code][0] and  ma[1] > globals()['ma'+stock_code][1]:
+            if stock_code not in buy_list:
+                buy_list.append(stock_code)
+                print('%s买入时机' % stock_code)
+    
+    
 
