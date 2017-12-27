@@ -574,6 +574,8 @@ def help():
 
 help()
 
+import code
+code.interact(banner = "", local = locals())
 
 import os
 os.system("pause")
