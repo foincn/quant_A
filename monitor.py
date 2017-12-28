@@ -59,7 +59,7 @@ def price_now(stock_code):
     r = None
     while r == None:
         try:
-            r = s.get(url, timeout=3)
+            r = s.get(url, timeout=5)
         except:
             pass
     if r.text == '':
@@ -83,7 +83,7 @@ def ma_now(stock_code, debug=0):
     r = None
     while r == None:
         try:
-            r = s.get(url, proxies=proxies, timeout=3)
+            r = s.get(url, proxies=proxies, timeout=5)
         except:
             pass
     if debug != 0:
@@ -214,7 +214,7 @@ def get_sza_page(page_num, afterdate=20171201):
     r = None
     while r == None:
         try:
-            r = s.get(url, timeout=3)
+            r = s.get(url, timeout=5)
         except:
             pass
         else:
@@ -244,7 +244,7 @@ def get_szzx_page(page_num):
     r = None
     while r == None:
         try:
-            r = s.get(url, timeout=3)
+            r = s.get(url, timeout=5)
         except:
             pass
         else:
@@ -267,7 +267,7 @@ def get_szcy_page(page_num):
     r = None
     while r == None:
         try:
-            r = s.get(url, timeout=3)
+            r = s.get(url, timeout=5)
         except:
             pass
         else:
