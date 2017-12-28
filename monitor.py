@@ -138,6 +138,7 @@ def plot_ma(stock_code, MA5, MA10, DATE, listname):
     if platform.system() == 'Linux':
         font = FontProperties(fname="/usr/share/fonts/opentype/noto/NotoSansCJK-Medium.ttc", size=14)
     elif platform.system() == 'Windows':
+        #pl.rcParams['font.sans-serif']=['SimHei']
         font = FontProperties(fname="C:\\Windows\\Fonts\\Microsoft YaHei UI\\msyh.ttc", size=14)
     elif platform.system() == 'Darwin':
         font = FontProperties(fname="/Library/Fonts/STHeiti Medium.ttc", size=14)
@@ -491,7 +492,7 @@ def ma_monitor_stop():
 def ma_monitor(listname='share_list', count=9999):
     global buy_list
     global ma_monitor_status
-    ma_monitor_status = False
+    globals()['ma_monitor_status'] = False
     buy_list = []
     create_ma_form('MA')
     c = 0
